@@ -1,7 +1,5 @@
 1. Why there’s no deadlock in the Go pipeline:
-
 Producers only send into inCh, stage-2 workers only read from inCh and send into outCh, and the final filter only reads from outCh. There is no circular wait because every channel is used in one direction only. Furthermore, both inCh and outCh have a capacity of 5, so brief bursts of sends won’t immediately block the sender if the receiver is momentarily slower. Lastly, we use sync.WaitGroup to know exactly when all producers are done, then we close inCh. Consumers, upon draining it, finish and signal via another WaitGroup, after which we close outCh. The final filter loops over outCh until it’s closed. Because each goroutine only blocks on a channel that will eventually be closed they all make forward progress and exit cleanly.
-
 
 2. Fan-out/fan-in in Elixir’s actor model
 In Go, channels are independent buffer structures and you can simply have many senders and many receivers on the same channel. In Elixir, each mailbox is tied to exactly one process, so to emulate a “shared channel” you can use a GenServer. To do this in Elixir one can implement a GenServer that holds an internal queue of incoming values.
